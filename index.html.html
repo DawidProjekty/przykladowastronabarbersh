@@ -1,0 +1,1374 @@
+<title>BARBERS LAB</title>
+<style>
+:root{--bg:#090d16;--bg-2:#0f172a;--ink:#ece6dc;--muted:#8e97a9;--copper:#c9854f;--copper-hi:#e8b27a;--line:rgba(255,255,255,.08);color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink)}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Archivo:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>window.react = window.React;</script>
+<script src="https://unpkg.com/framer-motion@10.18.0/dist/framer-motion.js"></script>
+<script src="https://unpkg.com/lucide-react@0.294.0/dist/umd/lucide-react.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const { useEffect, useMemo, useRef, useState } = React;
+const __M = window.Motion || window.FramerMotion || {};
+const { motion, useInView, useReducedMotion, AnimatePresence } = __M;
+
+
+/* =========================================================================
+   BARBERS LAB — landing page
+   Layout: ciemny "laboratoryjny" układ, miedź jako jedyny akcent,
+   jeden odważny element: duży kursywny Bodoni w nagłówku hero.
+   Wymaga: react, framer-motion, lucide-react, Tailwind CSS (v3).
+   ========================================================================= */
+
+const __L = window.LucideReact || window.lucideReact || {};
+const ArrowRight = __L.ArrowRight || (() => null);
+const ArrowUpRight = __L.ArrowUpRight || (() => null);
+const CalendarDays = __L.CalendarDays || (() => null);
+const Check = __L.Check || (() => null);
+const Clock = __L.Clock || (() => null);
+const Facebook = __L.Facebook || (() => null);
+const Flame = __L.Flame || (() => null);
+const Instagram = __L.Instagram || (() => null);
+const Mail = __L.Mail || (() => null);
+const MapPin = __L.MapPin || (() => null);
+const Menu = __L.Menu || (() => null);
+const Phone = __L.Phone || (() => null);
+const Ruler = __L.Ruler || (() => null);
+const Scissors = __L.Scissors || (() => null);
+const Star = __L.Star || (() => null);
+const X = __L.X || (() => null);
+
+/* ---------- DANE DO PODMIANY ------------------------------------------- */
+
+// Dane kontaktowe są przykładowe. Podmień na prawdziwe.
+const CONTACT = {
+  address: "ul. Przykładowa 12, 00-000 Miasto",
+  phone: "+48 000 000 000",
+  email: "kontakt@barberslab.pl",
+  hours: [
+    ["Pon – Pt", "10:00 – 20:00"],
+    ["Sobota", "10:00 – 16:00"],
+    ["Niedziela", "nieczynne"],
+  ],
+  instagram: "https://www.instagram.com/",
+  facebook: "https://www.facebook.com/",
+  // Wklej tutaj link do wizytówki z Google Maps.
+  mapsUrl: "https://www.google.com/maps/search/?api=1&query=BARBERS+LAB",
+};
+
+// Zdjęcia z Unsplash. Przed publikacją sprawdź, czy każde ID nadal działa.
+const unsplash = (id, w = 1400) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=80`;
+
+const IMG = {
+  hero: unsplash("photo-1503951914875-452162b0f3f1", 2000),
+  g1: unsplash("photo-1521590832167-7bcbfaa6381f", 1400),
+  g2: unsplash("photo-1621605815971-fbc98d665033", 900),
+  g3: unsplash("photo-1599351431202-1e0f0137899a", 900),
+  g4: unsplash("photo-1605497788044-5a32c7078486", 1400),
+  g5: unsplash("photo-1622286342621-4bd786c2447c", 900),
+  g6: unsplash("photo-1585747860715-2ba37e788b70", 900),
+  t1: unsplash("photo-1507003211169-0a1dd7228f2d", 900),
+  t2: unsplash("photo-1500648767791-00dcc994a43e", 900),
+  t3: unsplash("photo-1472099645785-5658abf4ff4e", 900),
+  t4: unsplash("photo-1519085360753-af0119f7cbe7", 900),
+};
+
+// Ceny, czasy i opisy usług są przykładowe.
+const SERVICES = [
+  {
+    id: "classic",
+    code: "P-01",
+    name: "Strzyżenie klasyczne",
+    desc: "Konsultacja kształtu, strzyżenie nożyczkami i maszynką, mycie głowy, stylizacja.",
+    min: 45,
+    price: 90,
+  },
+  {
+    id: "fade",
+    code: "P-02",
+    name: "Skin fade",
+    desc: "Płynne przejście od 0,5 mm, wykończenie brzytwą, kontur i stylizacja pomadą.",
+    min: 50,
+    price: 110,
+  },
+  {
+    id: "beard",
+    code: "P-03",
+    name: "Modelowanie brody",
+    desc: "Kontur, gorący ręcznik 55°C, strzyżenie, olejek i balsam pielęgnujący.",
+    min: 40,
+    price: 80,
+  },
+  {
+    id: "combo",
+    code: "P-04",
+    name: "Włosy + broda",
+    desc: "Pełny rytuał w jednej wizycie: strzyżenie, broda, gorący ręcznik i stylizacja.",
+    min: 80,
+    price: 160,
+    featured: true,
+  },
+  {
+    id: "razor",
+    code: "P-05",
+    name: "Golenie brzytwą",
+    desc: "Klasyczne golenie głowy lub twarzy, dwa przejścia, gorący i zimny kompres.",
+    min: 40,
+    price: 90,
+  },
+  {
+    id: "junior",
+    code: "P-06",
+    name: "Junior (do 12 lat)",
+    desc: "Strzyżenie dla najmłodszych. Spokojnie, bez pośpiechu, z krótką konsultacją dla rodzica.",
+    min: 30,
+    price: 70,
+  },
+];
+
+// Imiona, role i opisy są przykładowe. Zdjęcia to fotografie stockowe.
+const TEAM = [
+  {
+    name: "Marek Wolski",
+    role: "Master Barber · Założyciel",
+    tag: "Klasyka · brzytwa",
+    photo: IMG.t1,
+    bio: "Od 12 lat z brzytwą w ręku. Specjalizuje się w klasycznych cięciach i goleniu na gorąco.",
+  },
+  {
+    name: "Adrian Kowal",
+    role: "Senior Barber",
+    tag: "Fade · tekstury",
+    photo: IMG.t2,
+    bio: "Pracuje na milimetry i nie oddaje klienta, dopóki linia nie jest idealna. Skin fade to jego znak rozpoznawczy.",
+  },
+  {
+    name: "Bartek Nowicki",
+    role: "Beard Specialist",
+    tag: "Broda · pielęgnacja",
+    photo: IMG.t3,
+    bio: "Projektuje brody pod kształt twarzy i dobiera olejki tak, żeby zarost wyglądał dobrze także po tygodniu.",
+  },
+  {
+    name: "Oskar Lewandowski",
+    role: "Barber",
+    tag: "Trendy · junior",
+    photo: IMG.t4,
+    bio: "Najszybciej łapie nowe trendy. Zajmuje się młodszymi klientami i krótkimi, wyrazistymi cięciami.",
+  },
+];
+
+const GALLERY = [
+  { src: IMG.g1, label: "Stanowiska", cls: "col-span-2 row-span-2" },
+  { src: IMG.g2, label: "Brzytwa i gorący ręcznik", cls: "" },
+  { src: IMG.g3, label: "Strefa oczekiwania", cls: "" },
+  { src: IMG.g4, label: "Linia brody", cls: "col-span-2" },
+  { src: IMG.g5, label: "Skin fade", cls: "" },
+  { src: IMG.g6, label: "Wykończenie", cls: "" },
+];
+
+// Opinie wklejone z profilu Google Maps.
+const REVIEWS = [
+  {
+    name: "Ihor",
+    meta: "Lokalny przewodnik · 203 opinie · 669 zdjęć",
+    when: "9 miesięcy temu",
+    text: "BARBERS LAB to miejsce, które naprawdę pozytywnie zaskakuje od pierwszej chwili. Bardzo stylowy, nowoczesny i dopracowany w każdym detalu design tworzy atmosferę profesjonalizmu i komfortu. Widać, że tutaj dba się o wszystko — od czystości…",
+    more: true,
+    reply: { when: "9 miesięcy temu", text: "Miło było nam cię gościć, dziękujemy bardzo! 😊" },
+    tint: "#3b6ea8",
+  },
+  {
+    name: "Jakub Szulborski",
+    meta: "1 opinia",
+    when: "8 miesięcy temu",
+    text: "Obsługa TOP, świetna atmosfera. Jak do barbera to tylko tam 🥸🫵",
+    reply: { when: "8 miesięcy temu", text: "Otóż to! Dzięki 🤙🏼" },
+    tint: "#8a5a3c",
+  },
+  {
+    name: "Przemysław Kowalski",
+    meta: "3 opinie",
+    when: "7 miesięcy temu",
+    text: "Bardzo miła i profesjonalna obsługa.\nWykonane usługi- strzyżenie głowy oraz przycinanie brody, polecam!",
+    tint: "#5b7a52",
+  },
+];
+
+const NAV = [
+  { id: "uslugi", label: "Usługi" },
+  { id: "zespol", label: "Zespół" },
+  { id: "galeria", label: "Galeria" },
+  { id: "opinie", label: "Opinie" },
+  { id: "kontakt", label: "Kontakt" },
+];
+
+/* ---------- STYLE GLOBALNE --------------------------------------------- */
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Archivo:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#090d16;
+  --bg-2:#0f172a;
+  --ink:#ece6dc;
+  --muted:#8e97a9;
+  --copper:#c9854f;
+  --copper-hi:#e8b27a;
+  --line:rgba(255,255,255,.08);
+  color-scheme: dark;
+}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink)}
+.bl-root{background:var(--bg);color:var(--ink);font-family:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip}
+.bl-root ::selection{background:rgba(201,133,79,.4);color:#fff}
+.bl-root :focus-visible{outline:2px solid var(--copper-hi);outline-offset:3px;border-radius:6px}
+
+.f-display{font-family:'Bodoni Moda','Didot','Bodoni 72',Georgia,serif;font-optical-sizing:auto}
+.f-mono{font-family:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace}
+.ink{color:var(--ink)}
+.muted{color:var(--muted)}
+.copper{color:var(--copper)}
+.copper-hi{color:var(--copper-hi)}
+.bg-deep{background:var(--bg)}
+.bg-deep-2{background:var(--bg-2)}
+.hair{border-color:var(--line)}
+.balance{text-wrap:balance}
+
+.eyebrow{display:inline-flex;align-items:center;gap:.75rem;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--copper-hi)}
+.eyebrow::before{content:"";width:28px;height:1px;background:linear-gradient(90deg,var(--copper),transparent)}
+
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 24px 60px -28px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05)}
+.glass-solid{background:linear-gradient(180deg,#121a2c,#0c1220);box-shadow:0 24px 60px -28px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05)}
+
+.gb{position:relative}
+.gb::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:linear-gradient(140deg,rgba(232,178,122,.5),rgba(255,255,255,.05) 38%,rgba(255,255,255,.03) 62%,rgba(201,133,79,.28));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask-composite:exclude;
+  transition:opacity .4s ease}
+.gb-hot::before{background:linear-gradient(140deg,rgba(255,214,170,.95),rgba(201,133,79,.35) 45%,rgba(232,178,122,.85))}
+.lift{transition:box-shadow .45s ease}
+.lift:hover{box-shadow:0 30px 70px -26px rgba(201,133,79,.38),0 24px 60px -28px rgba(0,0,0,.9)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;border-radius:999px;padding:.95rem 1.6rem;font-size:14px;font-weight:500;letter-spacing:.02em;cursor:pointer;border:0;white-space:nowrap}
+.btn-primary{color:#1b1007;background:linear-gradient(135deg,#efbd8a,#c9854f 55%,#b06a38);box-shadow:0 14px 34px -14px rgba(201,133,79,.85),inset 0 1px 0 rgba(255,255,255,.35);transition:box-shadow .35s ease,filter .35s ease}
+.btn-primary:hover{box-shadow:0 20px 44px -14px rgba(232,178,122,.95),inset 0 1px 0 rgba(255,255,255,.45);filter:brightness(1.06)}
+.btn-ghost{color:var(--ink);background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);transition:box-shadow .35s ease,background .35s ease}
+.btn-ghost:hover{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(232,178,122,.7)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+.logo-mark{border:1px solid rgba(201,133,79,.55);background:rgba(201,133,79,.09)}
+.photo-fallback{background:
+  radial-gradient(120% 90% at 20% 10%,rgba(201,133,79,.30),transparent 55%),
+  repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 1px,transparent 1px 14px),
+  linear-gradient(160deg,#16203a,#0a0f1b)}
+.grain{position:fixed;inset:0;z-index:70;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.ruler{height:14px;background:
+  repeating-linear-gradient(90deg,rgba(232,178,122,.7) 0 1px,transparent 1px 12px) bottom/100% 7px no-repeat,
+  repeating-linear-gradient(90deg,rgba(232,178,122,.95) 0 1px,transparent 1px 60px) bottom/100% 14px no-repeat}
+.noscroll{scrollbar-width:none}
+.noscroll::-webkit-scrollbar{display:none}
+.field{width:100%;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);padding:.9rem 1rem;color:var(--ink);font-size:15px;border:0;transition:box-shadow .3s ease,background .3s ease}
+.field::placeholder{color:#5f6a80}
+.field:focus{outline:none;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--copper-hi),0 0 0 4px rgba(201,133,79,.16)}
+.chip{border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);background:rgba(255,255,255,.03);transition:box-shadow .3s ease,background .3s ease,transform .3s ease;cursor:pointer;color:var(--ink)}
+.chip:hover{box-shadow:inset 0 0 0 1px rgba(232,178,122,.55);background:rgba(255,255,255,.06)}
+.chip[aria-pressed="true"]{background:linear-gradient(135deg,rgba(232,178,122,.2),rgba(201,133,79,.08));box-shadow:inset 0 0 0 1px var(--copper-hi)}
+.chip[disabled]{opacity:.32;cursor:not-allowed;text-decoration:line-through}
+.chip[disabled]:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);background:rgba(255,255,255,.03)}
+.gcard{background:linear-gradient(180deg,#111a2d,#0b1120);box-shadow:0 24px 60px -30px rgba(0,0,0,.9)}
+.pulse{animation:pulse 2.4s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,178,122,.55)}100%{box-shadow:0 0 0 14px rgba(232,178,122,0)}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .bl-root *{animation:none!important;transition:none!important}
+}
+`;
+
+/* ---------- POMOCNICZE -------------------------------------------------- */
+
+const EASE = [0.22, 1, 0.36, 1];
+
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function scrollToId(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+}
+
+/** Pojawianie się sekcji przy przewijaniu. Start od 30% krycia, żeby treść
+ *  była czytelna także na zrzucie ekranu bez przewijania. */
+function Reveal({ children, delay = 0, y = 28, className = "", as = "div" }) {
+  const reduce = useReducedMotion();
+  const Tag = motion[as];
+  return (
+    <Tag
+      className={className}
+      initial={reduce ? false : { opacity: 0.3, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "0px 0px -8% 0px" }}
+      transition={{ duration: 0.85, ease: EASE, delay }}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+function Photo({ src, alt = "", label, className = "", imgClassName = "" }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className={`overflow-hidden ${className}`}>
+      <div className="photo-fallback absolute inset-0" aria-hidden="true" />
+      {failed && label ? (
+        <span className="f-mono absolute bottom-3 left-3 text-[10px] uppercase tracking-[0.2em] muted">
+          {label}
+        </span>
+      ) : null}
+      {!failed ? (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailed(true)}
+          className={`absolute inset-0 h-full w-full object-cover ${imgClassName}`}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function SectionHead({ eyebrow, title, children, align = "left" }) {
+  return (
+    <Reveal className={`mb-12 max-w-2xl sm:mb-16 ${align === "center" ? "mx-auto text-center" : ""}`}>
+      <span className="eyebrow">{eyebrow}</span>
+      <h2 className="f-display balance mt-5 text-[2rem] font-normal leading-[1.08] tracking-[-0.01em] sm:text-5xl">
+        {title}
+      </h2>
+      {children ? <p className="muted mt-5 text-base leading-relaxed sm:text-lg">{children}</p> : null}
+    </Reveal>
+  );
+}
+
+const Container = ({ children, className = "" }) => (
+  <div className={`mx-auto w-full max-w-6xl px-4 sm:px-6 ${className}`}>{children}</div>
+);
+
+function Stars({ size = 16 }) {
+  return (
+    <span className="inline-flex gap-0.5" aria-label="5 na 5 gwiazdek">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <Star key={i} size={size} fill="#FBBC04" color="#FBBC04" strokeWidth={1.5} />
+      ))}
+    </span>
+  );
+}
+
+function GoogleWord({ className = "" }) {
+  const c = ["#4285F4", "#EA4335", "#FBBC04", "#4285F4", "#34A853", "#EA4335"];
+  return (
+    <span className={`font-medium tracking-tight ${className}`} aria-label="Google">
+      {"Google".split("").map((ch, i) => (
+        <span key={i} style={{ color: c[i] }}>
+          {ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function Counter({ to, suffix = "", decimals = 0 }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -10% 0px" });
+  const reduce = useReducedMotion();
+  const [v, setV] = useState(to);
+  useEffect(() => {
+    if (!inView || reduce) return undefined;
+    let raf;
+    let start = null;
+    const dur = 1700;
+    setV(0);
+    const tick = (t) => {
+      if (start === null) start = t;
+      const p = Math.min((t - start) / dur, 1);
+      setV(to * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, reduce, to]);
+  const shown = decimals
+    ? v.toFixed(decimals).replace(".", ",")
+    : Math.round(v).toLocaleString("pl-PL");
+  return (
+    <span ref={ref} className="tabular-nums">
+      {shown}
+      {suffix}
+    </span>
+  );
+}
+
+/* ---------- NAVBAR ------------------------------------------------------ */
+
+function Navbar() {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const go = (id) => (e) => {
+    e.preventDefault();
+    setOpen(false);
+    scrollToId(id);
+  };
+
+  return (
+    <header
+      className="fixed inset-x-0 top-0 z-50"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
+      <Container className="pt-3 sm:pt-4">
+        <motion.nav
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: EASE }}
+          className={`gb flex items-center justify-between rounded-full px-3 py-2.5 sm:px-4 ${
+            scrolled || open ? "glass" : ""
+          }`}
+          style={{ transition: "background .4s ease" }}
+          aria-label="Główna nawigacja"
+        >
+          <a href="#top" onClick={go("top")} className="flex items-center gap-2.5 pl-1">
+            <span className="logo-mark grid h-9 w-9 place-items-center rounded-full copper-hi">
+              <Scissors size={16} />
+            </span>
+            <span className="f-mono text-[12px] tracking-[0.3em] ink sm:text-[13px]">
+              BARBERS<span className="copper"> LAB</span>
+            </span>
+          </a>
+
+          <ul className="hidden items-center gap-1 md:flex">
+            {NAV.map((n) => (
+              <li key={n.id}>
+                <a
+                  href={`#${n.id}`}
+                  onClick={go(n.id)}
+                  className="muted rounded-full px-4 py-2 text-sm transition-colors hover:text-[#ece6dc]"
+                >
+                  {n.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex items-center gap-2">
+            <motion.a
+              href="#rezerwacja"
+              onClick={go("rezerwacja")}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              className="btn btn-primary !px-5 !py-2.5 text-[13px]"
+            >
+              Zarezerwuj
+            </motion.a>
+            <button
+              type="button"
+              className="btn btn-ghost !px-3 !py-3 md:hidden"
+              aria-label={open ? "Zamknij menu" : "Otwórz menu"}
+              aria-expanded={open}
+              onClick={() => setOpen((o) => !o)}
+            >
+              {open ? <X size={16} /> : <Menu size={16} />}
+            </button>
+          </div>
+        </motion.nav>
+
+        <AnimatePresence>
+          {open ? (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="glass gb mt-2 rounded-3xl p-3 md:hidden"
+            >
+              {NAV.map((n) => (
+                <a
+                  key={n.id}
+                  href={`#${n.id}`}
+                  onClick={go(n.id)}
+                  className="flex items-center justify-between rounded-2xl px-4 py-3.5 text-[15px] ink"
+                >
+                  {n.label}
+                  <ArrowRight size={15} className="copper" />
+                </a>
+              ))}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </Container>
+    </header>
+  );
+}
+
+/* ---------- HERO -------------------------------------------------------- */
+
+function Hero() {
+  const reduce = useReducedMotion();
+  const item = (i) => ({
+    initial: reduce ? false : { opacity: 0, y: 30 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.9, ease: EASE, delay: 0.15 + i * 0.12 },
+  });
+
+  return (
+    <section id="top" className="relative isolate overflow-hidden pb-14 pt-32 sm:pb-20 sm:pt-44">
+      <div className="absolute inset-0 -z-10">
+        <Photo src={IMG.hero} label="Zdjęcie główne" className="absolute inset-0" imgClassName="opacity-80" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg,rgba(9,13,22,.78) 0%,rgba(9,13,22,.55) 38%,rgba(9,13,22,.92) 82%,#090d16 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(70% 60% at 85% 20%,rgba(201,133,79,.22),transparent 60%),linear-gradient(100deg,rgba(9,13,22,.9) 10%,transparent 65%)",
+          }}
+        />
+      </div>
+
+      <Container>
+        <div className="grid items-end gap-12 lg:grid-cols-[1.35fr_.65fr]">
+          <div className="min-w-0">
+            <motion.span {...item(0)} className="eyebrow">
+              Barber &amp; grooming
+            </motion.span>
+            <motion.h1
+              {...item(1)}
+              className="f-display balance mt-6 text-[2.6rem] font-normal leading-[1.02] tracking-[-0.02em] sm:text-7xl lg:text-[5.6rem]"
+            >
+              Linia, której nie poprawia się{" "}
+              <em className="copper-hi font-normal italic">dwa razy.</em>
+            </motion.h1>
+            <motion.p {...item(2)} className="muted mt-7 max-w-xl text-base leading-relaxed sm:text-lg">
+              BARBERS LAB to salon, w którym każdy fade, każdy kontur brody i każdy gorący ręcznik mają
+              swój protokół. Wchodzisz po strzyżenie, wychodzisz po precyzję.
+            </motion.p>
+            <motion.div {...item(3)} className="mt-9 flex flex-wrap items-center gap-3">
+              <motion.button
+                type="button"
+                onClick={() => scrollToId("rezerwacja")}
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.98 }}
+                className="btn btn-primary"
+              >
+                Zarezerwuj wizytę <ArrowRight size={16} />
+              </motion.button>
+              <motion.button
+                type="button"
+                onClick={() => scrollToId("uslugi")}
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.98 }}
+                className="btn btn-ghost"
+              >
+                Zobacz usługi
+              </motion.button>
+            </motion.div>
+          </div>
+
+          <motion.aside
+            {...item(4)}
+            className="glass gb min-w-0 rounded-[26px] p-6 lg:mb-2"
+            aria-label="Informacje o salonie"
+          >
+            <div className="flex items-center gap-3">
+              <span className="pulse h-2.5 w-2.5 rounded-full" style={{ background: "#e8b27a" }} />
+              <span className="f-mono text-[11px] uppercase tracking-[0.22em] copper-hi">Godziny otwarcia</span>
+            </div>
+            <dl className="mt-5 space-y-3 text-sm">
+              {CONTACT.hours.map(([d, h]) => (
+                <div key={d} className="flex items-baseline justify-between gap-4 border-b hair pb-3 last:border-0 last:pb-0">
+                  <dt className="muted">{d}</dt>
+                  <dd className="f-mono tabular-nums ink">{h}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-6 flex items-center justify-between rounded-2xl bg-white/[0.04] px-4 py-3">
+              <span className="inline-flex items-center gap-2 text-sm ink">
+                <Stars size={14} /> 5,0
+              </span>
+              <span className="muted text-xs">100 opinii w Google</span>
+            </div>
+          </motion.aside>
+        </div>
+
+        <motion.div {...item(5)} className="mt-16 sm:mt-24">
+          <div className="mb-3 flex items-center justify-between gap-4">
+            <span className="f-mono inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] muted">
+              <Ruler size={13} /> Skala cięcia
+            </span>
+            <span className="f-mono text-[11px] tracking-[0.18em] muted">mm</span>
+          </div>
+          <div className="ruler" aria-hidden="true" />
+          <div className="f-mono mt-2 flex justify-between text-[11px] tabular-nums muted">
+            {["0,5", "1,5", "3", "6", "9", "12"].map((n) => (
+              <span key={n}>{n}</span>
+            ))}
+          </div>
+        </motion.div>
+      </Container>
+    </section>
+  );
+}
+
+/* ---------- STATYSTYKI ------------------------------------------------- */
+
+function Stats() {
+  // 12 lat, 3 salony i 15k+ klientów to wartości przykładowe. Ocena 5,0 i 100 opinii pochodzą z Google Maps.
+  const items = [
+    { to: 12, suffix: "", label: "lat na rynku" },
+    { to: 3, suffix: "", label: "salony" },
+    { to: 15, suffix: "k+", label: "obsłużonych klientów" },
+    { to: 5, decimals: 1, suffix: "", label: "średnia z 100 opinii" },
+  ];
+  return (
+    <section aria-label="Liczby" className="relative z-10 pb-6">
+      <Container>
+        <Reveal className="glass gb grid grid-cols-2 rounded-[28px] lg:grid-cols-4">
+          {items.map((s, i) => (
+            <div
+              key={s.label}
+              className={`min-w-0 px-5 py-8 text-center sm:px-8 sm:py-10 ${
+                i % 2 === 1 ? "border-l hair" : ""
+              } ${i > 1 ? "border-t hair lg:border-t-0" : ""} ${i === 2 ? "lg:border-l hair" : ""}`}
+            >
+              <div className="f-display text-[2.6rem] leading-none sm:text-6xl">
+                <Counter to={s.to} suffix={s.suffix} decimals={s.decimals || 0} />
+              </div>
+              <div className="f-mono mt-4 text-[11px] uppercase tracking-[0.18em] muted">{s.label}</div>
+            </div>
+          ))}
+        </Reveal>
+      </Container>
+    </section>
+  );
+}
+
+/* ---------- USŁUGI ------------------------------------------------------ */
+
+function Services({ onPick }) {
+  return (
+    <section id="uslugi" className="scroll-mt-24 py-20 sm:py-28">
+      <Container>
+        <SectionHead eyebrow="Protokoły i cennik" title="Usługi, które mają swoją procedurę.">
+          Znasz cenę i czas z góry. Wybierz protokół, a resztą zajmiemy się w fotelu.
+        </SectionHead>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {SERVICES.map((s, i) => (
+            <Reveal key={s.id} delay={(i % 3) * 0.08} className="min-w-0">
+              <motion.article
+                whileHover={{ y: -8 }}
+                transition={{ duration: 0.4, ease: EASE }}
+                className={`gb lift flex h-full flex-col rounded-[24px] p-6 sm:p-7 ${
+                  s.featured ? "gb-hot glass-solid" : "gcard"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="f-mono text-[11px] tracking-[0.22em] copper-hi">{s.code}</span>
+                  {s.featured ? (
+                    <span className="f-mono inline-flex items-center gap-1.5 rounded-full bg-[rgba(232,178,122,.14)] px-3 py-1 text-[10px] uppercase tracking-[0.16em] copper-hi">
+                      <Flame size={11} /> Najczęściej wybierane
+                    </span>
+                  ) : null}
+                </div>
+                <h3 className="f-display mt-6 text-[1.7rem] font-normal leading-tight">{s.name}</h3>
+                <p className="muted mt-3 flex-1 text-[15px] leading-relaxed">{s.desc}</p>
+                <div className="mt-8 flex items-end justify-between gap-3 border-t hair pt-5">
+                  <div>
+                    <div className="f-display text-4xl leading-none tabular-nums">
+                      {s.price}
+                      <span className="muted ml-1 text-lg">zł</span>
+                    </div>
+                    <div className="muted f-mono mt-3 inline-flex items-center gap-2 text-[12px] tabular-nums">
+                      <Clock size={13} /> {s.min} min
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onPick(s.id)}
+                    className="btn btn-ghost !px-4 !py-2.5 text-[13px]"
+                  >
+                    Wybierz <ArrowUpRight size={14} />
+                  </button>
+                </div>
+              </motion.article>
+            </Reveal>
+          ))}
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+/* ---------- ZESPÓŁ ------------------------------------------------------ */
+
+function Team() {
+  return (
+    <section id="zespol" className="scroll-mt-24 py-20 sm:py-28">
+      <Container>
+        <SectionHead eyebrow="Zespół" title="Ludzie, którzy pracują na milimetry.">
+          Cztery osoby, cztery specjalizacje. Wybierasz fryzjera pod efekt, którego szukasz.
+        </SectionHead>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {TEAM.map((m, i) => (
+            <Reveal key={m.name} delay={i * 0.08} className="min-w-0">
+              <motion.article
+                whileHover={{ y: -8 }}
+                transition={{ duration: 0.4, ease: EASE }}
+                className="gb lift group h-full overflow-hidden rounded-[24px] gcard"
+              >
+                <div className="relative aspect-[4/5] max-w-full">
+                  <Photo
+                    src={m.photo}
+                    alt={`${m.name}, ${m.role}`}
+                    label={m.name}
+                    className="absolute inset-0"
+                    imgClassName="grayscale transition duration-700 group-hover:scale-[1.04] group-hover:grayscale-0"
+                  />
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: "linear-gradient(180deg,transparent 45%,rgba(9,13,22,.92))" }}
+                  />
+                  <span className="f-mono absolute bottom-4 left-4 rounded-full bg-black/40 px-3 py-1 text-[10px] uppercase tracking-[0.16em] copper-hi backdrop-blur">
+                    {m.tag}
+                  </span>
+                </div>
+                <div className="p-6">
+                  <h3 className="f-display text-2xl font-normal">{m.name}</h3>
+                  <p className="f-mono mt-2 text-[11px] uppercase tracking-[0.16em] copper-hi">{m.role}</p>
+                  <p className="muted mt-4 text-[15px] leading-relaxed">{m.bio}</p>
+                </div>
+              </motion.article>
+            </Reveal>
+          ))}
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+/* ---------- GALERIA ----------------------------------------------------- */
+
+function Gallery() {
+  return (
+    <section id="galeria" className="scroll-mt-24 py-20 sm:py-28">
+      <Container>
+        <SectionHead eyebrow="Warsztat" title="Wnętrze i efekty pracy.">
+          Mosiądz, ciemne drewno i dobre światło. Tak wygląda miejsce, w którym zostawiasz głowę na godzinę.
+        </SectionHead>
+
+        <div className="grid auto-rows-[150px] grid-cols-2 gap-3 sm:auto-rows-[200px] sm:gap-4 md:grid-cols-4">
+          {GALLERY.map((g, i) => (
+            <Reveal key={g.label} delay={(i % 4) * 0.07} className={`min-w-0 ${g.cls}`}>
+              <motion.figure
+                whileHover={{ y: -5 }}
+                transition={{ duration: 0.4, ease: EASE }}
+                className="gb lift group relative m-0 h-full overflow-hidden rounded-[22px]"
+              >
+                <Photo
+                  src={g.src}
+                  alt={g.label}
+                  label={g.label}
+                  className="absolute inset-0"
+                  imgClassName="transition duration-700 group-hover:scale-[1.06]"
+                />
+                <div
+                  className="absolute inset-0 opacity-70 transition-opacity duration-500 group-hover:opacity-100"
+                  style={{ background: "linear-gradient(180deg,transparent 55%,rgba(9,13,22,.9))" }}
+                />
+                <figcaption className="f-mono absolute bottom-3 left-4 right-4 translate-y-1 text-[11px] uppercase tracking-[0.16em] ink transition duration-500 group-hover:translate-y-0">
+                  {g.label}
+                </figcaption>
+              </motion.figure>
+            </Reveal>
+          ))}
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+/* ---------- OPINIE GOOGLE ---------------------------------------------- */
+
+function ReviewCard({ r, i }) {
+  return (
+    <Reveal delay={i * 0.1} className="min-w-0">
+      <motion.article
+        whileHover={{ y: -6 }}
+        transition={{ duration: 0.4, ease: EASE }}
+        className="gb lift flex h-full flex-col rounded-[22px] gcard p-6"
+      >
+        <header className="flex items-center gap-3">
+          <span
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-base font-medium text-white"
+            style={{ background: r.tint }}
+            aria-hidden="true"
+          >
+            {r.name.charAt(0)}
+          </span>
+          <div className="min-w-0">
+            <h3 className="truncate text-[15px] font-medium ink">{r.name}</h3>
+            <p className="muted truncate text-xs">{r.meta}</p>
+          </div>
+        </header>
+
+        <div className="mt-4 flex items-center gap-3">
+          <Stars size={15} />
+          <span className="muted text-xs">{r.when}</span>
+        </div>
+
+        <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed ink" style={{ opacity: 0.92 }}>
+          {r.text}
+          {r.more ? (
+            <>
+              {" "}
+              <a
+                href={CONTACT.mapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="muted underline decoration-white/20 underline-offset-4 transition-colors hover:text-[#ece6dc]"
+              >
+                Więcej
+              </a>
+            </>
+          ) : null}
+        </p>
+
+        {r.reply ? (
+          <div className="mt-5 rounded-2xl bg-white/[0.04] p-4">
+            <p className="text-[13px] font-medium ink">Odpowiedź właściciela</p>
+            <p className="muted text-xs">{r.reply.when}</p>
+            <p className="muted mt-2 text-sm leading-relaxed">{r.reply.text}</p>
+          </div>
+        ) : null}
+
+        <footer className="mt-auto flex items-center gap-2 pt-5 text-xs muted">
+          <GoogleWord className="text-[13px]" />
+          <span>· opinia z Google Maps</span>
+        </footer>
+      </motion.article>
+    </Reveal>
+  );
+}
+
+function Reviews() {
+  return (
+    <section id="opinie" className="scroll-mt-24 py-20 sm:py-28">
+      <Container>
+        <SectionHead eyebrow="Opinie" title="Klienci mówią to sami." />
+
+        <Reveal>
+          <div className="glass gb mb-5 flex flex-col gap-6 rounded-[26px] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+              <div className="flex items-center gap-4">
+                <span className="grid h-12 w-12 place-items-center rounded-full bg-white">
+                  <span className="text-2xl font-semibold" style={{ color: "#4285F4" }}>
+                    G
+                  </span>
+                </span>
+                <div>
+                  <GoogleWord className="text-xl" />
+                  <p className="muted text-xs">Opinie z Google Maps</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="f-display text-6xl leading-none tabular-nums">5,0</span>
+                <div>
+                  <Stars size={18} />
+                  <p className="muted mt-1.5 text-sm tabular-nums">na podstawie 100 opinii</p>
+                </div>
+              </div>
+            </div>
+            <a
+              href={CONTACT.mapsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-ghost self-start sm:self-auto"
+            >
+              Zobacz na Mapach <ArrowUpRight size={15} />
+            </a>
+          </div>
+        </Reveal>
+
+        <div className="grid gap-5 md:grid-cols-3">
+          {REVIEWS.map((r, i) => (
+            <ReviewCard key={r.name} r={r} i={i} />
+          ))}
+        </div>
+
+        <p className="muted mt-6 text-xs">
+          Opinie pochodzą z profilu BARBERS LAB w Google Maps. Google nie weryfikuje opinii.
+        </p>
+      </Container>
+    </section>
+  );
+}
+
+/* ---------- REZERWACJA -------------------------------------------------- */
+
+const pad = (n) => String(n).padStart(2, "0");
+const WEEKDAY = ["ndz", "pon", "wt", "śr", "czw", "pt", "sob"];
+const MONTH = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+
+function buildDays(count = 8) {
+  const out = [];
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+  for (let i = 0; out.length < count; i += 1) {
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    if (d.getDay() !== 0) out.push(d); // niedziela: nieczynne
+  }
+  return out;
+}
+
+function buildSlots(date) {
+  const close = date.getDay() === 6 ? 16 : 20;
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const slots = [];
+  for (let m = 10 * 60; m < close * 60; m += 30) {
+    // Zajęte terminy są symulowane. Podłącz tu prawdziwy kalendarz.
+    const seed = (date.getDate() * 31 + (m / 30) * 17 + date.getDay() * 7) % 100;
+    const taken = seed < 32 || (isToday && m <= nowMin + 30);
+    slots.push({ time: `${pad(Math.floor(m / 60))}:${pad(m % 60)}`, min: m, taken });
+  }
+  return slots;
+}
+
+function Booking({ service, setService }) {
+  const days = useMemo(() => buildDays(8), []);
+  const firstFree = useMemo(() => {
+    const idx = days.findIndex((d) => buildSlots(d).some((s) => !s.taken));
+    return idx === -1 ? 0 : idx;
+  }, [days]);
+  const [dayIdx, setDayIdx] = useState(firstFree);
+  const [time, setTime] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  const day = days[dayIdx];
+  const slots = useMemo(() => buildSlots(day), [day]);
+  const svc = SERVICES.find((s) => s.id === service) || SERVICES[0];
+  const picked = slots.find((s) => s.time === time);
+  const endTime = picked
+    ? `${pad(Math.floor((picked.min + svc.min) / 60))}:${pad((picked.min + svc.min) % 60)}`
+    : "";
+  const dayLong = day.toLocaleDateString("pl-PL", { weekday: "long", day: "numeric", month: "long" });
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!time) return setError("Wybierz godzinę wizyty.");
+    if (name.trim().length < 2) return setError("Podaj imię, żebyśmy wiedzieli, kogo się spodziewać.");
+    if (phone.replace(/\D/g, "").length < 9) return setError("Podaj numer telefonu z co najmniej 9 cyframi.");
+    setError("");
+    // TODO: wyślij dane do swojego API albo kalendarza rezerwacji.
+    setDone(true);
+  };
+
+  const reset = () => {
+    setDone(false);
+    setTime("");
+    setName("");
+    setPhone("");
+  };
+
+  return (
+    <section id="rezerwacja" className="scroll-mt-24 py-20 sm:py-28">
+      <Container>
+        <SectionHead eyebrow="Rezerwacja" title="Zarezerwuj fotel w trzy kliknięcia.">
+          Wybierz usługę, dzień i godzinę. Zostaw numer, a potwierdzimy termin telefonicznie.
+        </SectionHead>
+
+        <Reveal>
+          <div className="glass-solid gb overflow-hidden rounded-[30px]">
+            <AnimatePresence mode="wait">
+              {done ? (
+                <motion.div
+                  key="done"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5, ease: EASE }}
+                  className="grid place-items-center px-6 py-16 text-center sm:py-24"
+                >
+                  <span className="logo-mark grid h-16 w-16 place-items-center rounded-full copper-hi">
+                    <Check size={26} />
+                  </span>
+                  <h3 className="f-display mt-7 text-3xl sm:text-4xl">Zgłoszenie przyjęte, {name.trim()}.</h3>
+                  <p className="muted mt-4 max-w-md text-base leading-relaxed">
+                    {svc.name}, {dayLong}, {time}–{endTime}. Oddzwonimy na {phone}, żeby potwierdzić termin.
+                  </p>
+                  <p className="muted mt-3 max-w-md text-xs">
+                    Podgląd demonstracyjny: formularz nie jest jeszcze połączony z kalendarzem rezerwacji.
+                  </p>
+                  <button type="button" onClick={reset} className="btn btn-ghost mt-8">
+                    Nowa rezerwacja
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form"
+                  onSubmit={submit}
+                  noValidate
+                  initial={false}
+                  exit={{ opacity: 0 }}
+                  className="grid gap-0 lg:grid-cols-[1.4fr_.8fr]"
+                >
+                  <div className="min-w-0 space-y-9 p-6 sm:p-10">
+                    <fieldset className="min-w-0 border-0 p-0">
+                      <legend className="f-mono mb-4 text-[11px] uppercase tracking-[0.22em] copper-hi">
+                        1 · Usługa
+                      </legend>
+                      <div className="grid gap-2.5 sm:grid-cols-2">
+                        {SERVICES.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            id={`svc-${s.id}`}
+                            aria-pressed={service === s.id}
+                            onClick={() => setService(s.id)}
+                            className="chip flex items-center justify-between gap-3 p-4 text-left"
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-[15px] font-medium">{s.name}</span>
+                              <span className="muted f-mono mt-1 block text-[11px] tabular-nums">{s.min} min</span>
+                            </span>
+                            <span className="f-display text-xl tabular-nums">{s.price} zł</span>
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+
+                    <fieldset className="min-w-0 border-0 p-0">
+                      <legend className="f-mono mb-4 text-[11px] uppercase tracking-[0.22em] copper-hi">
+                        2 · Dzień
+                      </legend>
+                      <div className="noscroll -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-2">
+                        {days.map((d, i) => (
+                          <button
+                            key={d.toDateString()}
+                            type="button"
+                            id={`day-${i}`}
+                            aria-pressed={dayIdx === i}
+                            onClick={() => {
+                              setDayIdx(i);
+                              setTime("");
+                            }}
+                            className="chip flex w-[76px] shrink-0 flex-col items-center gap-1 py-3.5"
+                          >
+                            <span className="f-mono text-[11px] uppercase tracking-[0.14em] muted">
+                              {WEEKDAY[d.getDay()]}
+                            </span>
+                            <span className="f-display text-2xl tabular-nums">{d.getDate()}</span>
+                            <span className="f-mono text-[10px] uppercase muted">{MONTH[d.getMonth()]}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+
+                    <fieldset className="min-w-0 border-0 p-0">
+                      <legend className="f-mono mb-4 text-[11px] uppercase tracking-[0.22em] copper-hi">
+                        3 · Godzina
+                      </legend>
+                      <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-5">
+                        {slots.map((s) => (
+                          <button
+                            key={s.time}
+                            type="button"
+                            id={`slot-${s.time.replace(":", "")}`}
+                            disabled={s.taken}
+                            aria-pressed={time === s.time}
+                            onClick={() => setTime(s.time)}
+                            className="chip f-mono py-3 text-[13px] tabular-nums"
+                          >
+                            {s.time}
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="min-w-0">
+                        <label htmlFor="bk-name" className="f-mono mb-2 block text-[11px] uppercase tracking-[0.22em] copper-hi">
+                          Imię
+                        </label>
+                        <input
+                          id="bk-name"
+                          className="field"
+                          placeholder="Jak mamy się do Ciebie zwracać?"
+                          autoComplete="given-name"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <label htmlFor="bk-phone" className="f-mono mb-2 block text-[11px] uppercase tracking-[0.22em] copper-hi">
+                          Telefon
+                        </label>
+                        <input
+                          id="bk-phone"
+                          className="field tabular-nums"
+                          placeholder="+48 500 000 000"
+                          type="tel"
+                          inputMode="tel"
+                          autoComplete="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <aside className="min-w-0 border-t hair bg-black/20 p-6 sm:p-10 lg:border-l lg:border-t-0">
+                    <div className="lg:sticky lg:top-28">
+                      <span className="f-mono text-[11px] uppercase tracking-[0.22em] copper-hi">Podsumowanie</span>
+                      <dl className="mt-6 space-y-5">
+                        <div>
+                          <dt className="muted text-xs">Usługa</dt>
+                          <dd className="f-display mt-1 text-2xl">{svc.name}</dd>
+                        </div>
+                        <div>
+                          <dt className="muted text-xs">Termin</dt>
+                          <dd className="mt-1 flex items-start gap-2 text-[15px] capitalize ink">
+                            <CalendarDays size={16} className="copper mt-1 shrink-0" />
+                            <span>
+                              {dayLong}
+                              <span className="f-mono mt-1 block text-[13px] normal-case tabular-nums muted">
+                                {time ? `${time} – ${endTime}` : "godzina niewybrana"}
+                              </span>
+                            </span>
+                          </dd>
+                        </div>
+                        <div className="flex items-end justify-between gap-3 border-t hair pt-5">
+                          <div>
+                            <dt className="muted text-xs">Do zapłaty na miejscu</dt>
+                            <dd className="f-display mt-1 text-4xl tabular-nums">{svc.price} zł</dd>
+                          </div>
+                          <span className="muted f-mono text-xs tabular-nums">{svc.min} min</span>
+                        </div>
+                      </dl>
+
+                      <AnimatePresence>
+                        {error ? (
+                          <motion.p
+                            role="alert"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="mt-6 rounded-2xl px-4 py-3 text-sm"
+                            style={{ background: "rgba(232,120,100,.12)", color: "#f0a595" }}
+                          >
+                            {error}
+                          </motion.p>
+                        ) : null}
+                      </AnimatePresence>
+
+                      <motion.button
+                        type="submit"
+                        id="bk-submit"
+                        whileHover={{ y: -3 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="btn btn-primary mt-6 w-full"
+                      >
+                        Zarezerwuj termin <ArrowRight size={16} />
+                      </motion.button>
+                      <p className="muted mt-4 text-xs leading-relaxed">
+                        Odwołanie wizyty możliwe do 3 godzin przed terminem.
+                      </p>
+                    </div>
+                  </aside>
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </div>
+        </Reveal>
+      </Container>
+    </section>
+  );
+}
+
+/* ---------- FOOTER ------------------------------------------------------ */
+
+function MapBlock() {
+  return (
+    <div className="gb relative h-full min-h-[240px] overflow-hidden rounded-[22px] gcard">
+      <svg
+        viewBox="0 0 400 260"
+        className="absolute inset-0 h-full w-full"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        <rect width="400" height="260" fill="#0c1424" />
+        <path d="M-10 190 C 90 150, 150 230, 260 170 S 380 120, 420 140" stroke="#16243d" strokeWidth="26" fill="none" />
+        <g stroke="#1b2740" strokeWidth="1.2" fill="none">
+          {[40, 90, 140, 190, 240, 290, 340].map((x) => (
+            <line key={`v${x}`} x1={x} y1="0" x2={x - 30} y2="260" />
+          ))}
+          {[30, 80, 130, 180, 230].map((y) => (
+            <line key={`h${y}`} x1="0" y1={y} x2="400" y2={y + 18} />
+          ))}
+        </g>
+        <path d="M0 60 L400 100" stroke="#2a3a5c" strokeWidth="5" />
+        <path d="M120 0 L170 260" stroke="#2a3a5c" strokeWidth="5" />
+        <circle cx="200" cy="112" r="34" fill="rgba(232,178,122,.12)" />
+        <circle cx="200" cy="112" r="16" fill="rgba(232,178,122,.2)" />
+      </svg>
+      <div className="absolute left-1/2 top-[43%] -translate-x-1/2 -translate-y-1/2">
+        <span className="pulse grid h-10 w-10 place-items-center rounded-full" style={{ background: "#e8b27a", color: "#1b1007" }}>
+          <MapPin size={18} />
+        </span>
+      </div>
+      <a
+        href={CONTACT.mapsUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="btn btn-ghost absolute bottom-4 left-4 !px-4 !py-2.5 text-[13px]"
+        style={{ background: "rgba(9,13,22,.8)" }}
+      >
+        Otwórz w Google Maps <ArrowUpRight size={14} />
+      </a>
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer id="kontakt" className="scroll-mt-24 border-t hair pb-10 pt-20">
+      <Container>
+        <div className="grid gap-12 lg:grid-cols-[1fr_1fr_1.1fr]">
+          <Reveal className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              <span className="logo-mark grid h-10 w-10 place-items-center rounded-full copper-hi">
+                <Scissors size={17} />
+              </span>
+              <span className="f-mono text-[13px] tracking-[0.3em]">
+                BARBERS<span className="copper"> LAB</span>
+              </span>
+            </div>
+            <p className="muted mt-6 max-w-xs text-[15px] leading-relaxed">
+              Męski salon, w którym precyzja jest standardem, a nie dodatkiem do usługi.
+            </p>
+            <div className="mt-7 flex gap-3">
+              <a href={CONTACT.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="btn btn-ghost !p-3">
+                <Instagram size={18} />
+              </a>
+              <a href={CONTACT.facebook} target="_blank" rel="noreferrer" aria-label="Facebook" className="btn btn-ghost !p-3">
+                <Facebook size={18} />
+              </a>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.08} className="min-w-0">
+            <span className="eyebrow">Kontakt</span>
+            <ul className="mt-6 space-y-4 text-[15px]">
+              <li className="flex gap-3">
+                <MapPin size={17} className="copper mt-0.5 shrink-0" />
+                <span>{CONTACT.address}</span>
+              </li>
+              <li className="flex gap-3">
+                <Phone size={17} className="copper mt-0.5 shrink-0" />
+                <span className="tabular-nums">{CONTACT.phone}</span>
+              </li>
+              <li className="flex gap-3">
+                <Mail size={17} className="copper mt-0.5 shrink-0" />
+                <span className="break-all">{CONTACT.email}</span>
+              </li>
+            </ul>
+            <dl className="mt-7 space-y-2.5 text-sm">
+              {CONTACT.hours.map(([d, h]) => (
+                <div key={d} className="flex max-w-xs justify-between gap-4">
+                  <dt className="muted">{d}</dt>
+                  <dd className="f-mono tabular-nums">{h}</dd>
+                </div>
+              ))}
+            </dl>
+          </Reveal>
+
+          <Reveal delay={0.16} className="min-w-0">
+            <MapBlock />
+          </Reveal>
+        </div>
+
+        <div className="muted mt-16 flex flex-col justify-between gap-3 border-t hair pt-6 text-xs sm:flex-row">
+          <span>© {new Date().getFullYear()} BARBERS LAB. Wszelkie prawa zastrzeżone.</span>
+          <button type="button" onClick={() => scrollToId("top")} className="inline-flex items-center gap-2 self-start hover:text-[#ece6dc]">
+            Wróć na górę <ArrowUpRight size={13} />
+          </button>
+        </div>
+      </Container>
+    </footer>
+  );
+}
+
+/* ---------- APLIKACJA --------------------------------------------------- */
+
+function BarbersLab() {
+  const [service, setService] = useState("combo");
+
+  const pickService = (id) => {
+    setService(id);
+    scrollToId("rezerwacja");
+  };
+
+  return (
+    <div className="bl-root min-h-screen">
+      <style>{CSS}</style>
+      <div className="grain" aria-hidden="true" />
+      <Navbar />
+      <main>
+        <Hero />
+        <Stats />
+        <Services onPick={pickService} />
+        <Team />
+        <Gallery />
+        <Reviews />
+        <Booking service={service} setService={setService} />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById("root")).render(<BarbersLab />);
+
+</script>
